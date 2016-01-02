@@ -13,7 +13,7 @@ class Controller extends \Concrete\Core\Package\Package
 
     public function getPackageName()
     {
-        return t('New Relic APM');
+        return t('Transaction fix for New Relic APM');
     }
 
     public function getPackageDescription()
