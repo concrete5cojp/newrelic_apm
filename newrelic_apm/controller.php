@@ -8,7 +8,7 @@ class Controller extends \Concrete\Core\Package\Package
 {
     protected $pkgHandle = 'newrelic_apm';
     protected $appVersionRequired = '5.7.5';
-    protected $pkgVersion = '0.1';
+    protected $pkgVersion = '0.2';
     protected $pkgAutoloaderMapCoreExtensions = true;
 
     public function getPackageName()
@@ -19,6 +19,14 @@ class Controller extends \Concrete\Core\Package\Package
     public function getPackageDescription()
     {
         return t('A helpful micro package for monitoring your concrete5 site with New Relic.');
+    }
+    
+    public function install()
+    {
+        if (!extension_loaded('newrelic')){
+            throw new \Exception(t('The newrelic php extension must be installed as a prerequisite. See %sHow to Setup%s', '<a href="http://www.concrete5.org/marketplace/addons/new-relic-apm/how-to-setup/">', '</a>'));
+        }
+       parent::install();
     }
     
     public function on_start()
