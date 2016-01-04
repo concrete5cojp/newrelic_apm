@@ -8,7 +8,7 @@ class Controller extends \Concrete\Core\Package\Package
 {
     protected $pkgHandle = 'newrelic_apm';
     protected $appVersionRequired = '5.7.5';
-    protected $pkgVersion = '0.2';
+    protected $pkgVersion = '0.3';
     protected $pkgAutoloaderMapCoreExtensions = true;
 
     public function getPackageName()
@@ -36,8 +36,9 @@ class Controller extends \Concrete\Core\Package\Package
             newrelic_set_appname($site);
             
             Events::addListener('on_page_view', function ($event) {
-                $request = $event->getRequest();
-                newrelic_name_transaction($request->getPathInfo());
+                $c = $event->getPageObject();
+                $path = ($c->getCollectionPath()) ? $c->getCollectionPath() : '/';
+                newrelic_name_transaction($path);
             });
         }
     }
