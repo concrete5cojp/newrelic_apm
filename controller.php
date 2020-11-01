@@ -1,15 +1,16 @@
 <?php
 namespace Concrete\Package\NewrelicApm;
 
-use Config;
-use Events;
+use Concrete\Core\Http\Request;
+use Concrete\Core\Package\Package;
+use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class Controller extends \Concrete\Core\Package\Package
+class Controller extends Package
 {
     protected $pkgHandle = 'newrelic_apm';
-    protected $appVersionRequired = '5.7.5';
-    protected $pkgVersion = '0.3';
-    protected $pkgAutoloaderMapCoreExtensions = true;
+    protected $appVersionRequired = '8.5.2';
+    protected $pkgVersion = '0.4';
 
     public function getPackageName()
     {
@@ -20,25 +21,28 @@ class Controller extends \Concrete\Core\Package\Package
     {
         return t('A helpful micro package for monitoring your concrete5 site with New Relic.');
     }
-    
+
     public function install()
     {
-        if (!extension_loaded('newrelic')){
-            throw new \Exception(t('The newrelic php extension must be installed as a prerequisite. See %sHow to Setup%s', '<a href="http://www.concrete5.org/marketplace/addons/new-relic-apm/how-to-setup/">', '</a>'));
+        if (!extension_loaded('newrelic')) {
+            throw new RuntimeException(t('The newrelic php extension must be installed as a prerequisite. See %sHow to Setup%s', '<a href="http://www.concrete5.org/marketplace/addons/new-relic-apm/how-to-setup/">', '</a>'));
         }
-       parent::install();
+        parent::install();
     }
-    
+
     public function on_start()
     {
         if (extension_loaded('newrelic')) {
-            $site = (Config::get('newrelic.site')) ? Config::get('newrelic.site') : 'concrete5';
+            $site = $this->app->make('site')->getSite();
+            $appConfig = $this->app->make('config');
+            $site = ($appConfig->get('newrelic.site')) ? $appConfig->get('newrelic.site') : tc('SiteName', $site->getSiteName());
             newrelic_set_appname($site);
-            
-            Events::addListener('on_page_view', function ($event) {
-                $c = $event->getPageObject();
-                $path = ($c->getCollectionPath()) ? $c->getCollectionPath() : '/';
-                newrelic_name_transaction($path);
+
+            /** @var EventDispatcherInterface $dispatcher */
+            $dispatcher = $this->app->make(EventDispatcherInterface::class);
+            $dispatcher->addListener('on_before_dispatch', function () {
+                $request = Request::getInstance();
+                newrelic_name_transaction($request->getPath());
             });
         }
     }
