@@ -11,7 +11,7 @@ class Controller extends Package
 {
     protected $pkgHandle = 'newrelic_apm';
     protected $appVersionRequired = '8.5.2';
-    protected $pkgVersion = '0.4';
+    protected $pkgVersion = '0.5';
 
     public function getPackageName()
     {
