@@ -3,6 +3,7 @@ namespace Concrete\Package\NewrelicApm;
 
 use Concrete\Core\Http\Request;
 use Concrete\Core\Package\Package;
+use Concrete\Core\Page\Event;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -36,13 +37,18 @@ class Controller extends Package
             $site = $this->app->make('site')->getSite();
             $appConfig = $this->app->make('config');
             $site = ($appConfig->get('newrelic.site')) ? $appConfig->get('newrelic.site') : tc('SiteName', $site->getSiteName());
-            newrelic_set_appname($site);
+            if (!empty($site)) {
+                newrelic_set_appname($site);
+            }
 
             /** @var EventDispatcherInterface $dispatcher */
             $dispatcher = $this->app->make(EventDispatcherInterface::class);
-            $dispatcher->addListener('on_before_dispatch', function () {
-                $request = Request::getInstance();
-                newrelic_name_transaction($request->getPath());
+            $dispatcher->addListener('on_page_view', function ($event) {
+                /** @var Event $event */
+                $page = $event->getPageObject();
+                if (is_object($page) && !$page->isError() && !empty($page->getCollectionPath())) {
+                    newrelic_name_transaction((string) $page->getCollectionPath());
+                }
             });
         }
     }
